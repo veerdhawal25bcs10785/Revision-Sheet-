@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#090b10" />
+    <title>Revision Tracker</title>
+    <script>
+      (function () {
+        try {
+          var s = localStorage.getItem('revision-tracker-settings');
+          var theme = s ? JSON.parse(s).theme : 'dark';
+          document.documentElement.dataset.theme = theme || 'dark';
+        } catch (_) {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/index-ChXbUnDH.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CvTuFRql.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
