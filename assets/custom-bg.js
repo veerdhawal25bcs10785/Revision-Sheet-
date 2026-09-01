@@ -5,6 +5,23 @@
   var MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB safety cap for localStorage
   var STYLE_TAG_ID = "custom-bg-style";
   var DEFAULT_OPACITY = 68; // % opacity for panels/sidebar when a custom bg is active
+  var APP_SETTINGS_KEY = "revision-tracker-settings";
+
+  function forceDarkTheme() {
+    // Pressing "Default" resets the background AND always lands on dark
+    // mode — whether the app was currently in light or dark mode.
+    try {
+      var raw = localStorage.getItem(APP_SETTINGS_KEY);
+      var obj = raw ? JSON.parse(raw) : {};
+      obj.theme = "dark";
+      localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(obj));
+    } catch (e) {
+      /* ignore storage errors */
+    }
+    // Flip it visually right away — the app's CSS is driven entirely by
+    // this attribute, so this takes effect instantly without a reload.
+    document.documentElement.dataset.theme = "dark";
+  }
   var DEFAULT_TINT = "light"; // "light" = white glass (Gmail-style), "dark" = tinted with app's own dark colors
 
   function loadSettings() {
@@ -104,29 +121,41 @@
 
     panel.innerHTML =
       '<div class="cbg-row cbg-title">Background</div>' +
-      '<div class="cbg-row">' +
-      '  <label class="cbg-label" for="cbg-color-input">Color</label>' +
-      '  <input type="color" id="cbg-color-input" value="#0d1118" />' +
-      '  <button type="button" id="cbg-default-btn" class="cbg-btn">Default</button>' +
+      '<div class="cbg-group">' +
+      '  <div class="cbg-row">' +
+      '    <label class="cbg-label" for="cbg-color-input">Color</label>' +
+      '    <input type="color" id="cbg-color-input" value="#0d1118" />' +
+      '    <button type="button" id="cbg-default-btn" class="cbg-btn">Default</button>' +
+      "  </div>" +
       "</div>" +
-      '<div class="cbg-row">' +
-      '  <label class="cbg-label" for="cbg-image-input">Image</label>' +
-      '  <input type="file" id="cbg-image-input" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp,.svg,image/*" />' +
+      '<div class="cbg-group">' +
+      '  <div class="cbg-row">' +
+      '    <span class="cbg-label">Image</span>' +
+      '    <button type="button" id="cbg-image-trigger" class="cbg-btn cbg-btn-accent">Choose image</button>' +
+      "  </div>" +
+      '  <div class="cbg-row cbg-file-row">' +
+      '    <span class="cbg-file-name" id="cbg-file-name">No file chosen</span>' +
+      "  </div>" +
+      '  <input type="file" id="cbg-image-input" class="cbg-file-hidden" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp,.svg,image/*" />' +
+      '  <div class="cbg-row" id="cbg-image-preview-row" style="display:none;">' +
+      '    <img id="cbg-image-preview" alt="Background preview" />' +
+      '    <button type="button" id="cbg-remove-image-btn" class="cbg-btn">Remove image</button>' +
+      "  </div>" +
       "</div>" +
-      '<div class="cbg-row" id="cbg-image-preview-row" style="display:none;">' +
-      '  <img id="cbg-image-preview" alt="Background preview" />' +
-      '  <button type="button" id="cbg-remove-image-btn" class="cbg-btn">Remove image</button>' +
+      '<div class="cbg-group">' +
+      '  <div class="cbg-row">' +
+      '    <label class="cbg-label" for="cbg-opacity-input">Panels</label>' +
+      '    <input type="range" id="cbg-opacity-input" min="20" max="90" step="5" />' +
+      '    <span class="cbg-opacity-value" id="cbg-opacity-value"></span>' +
+      "  </div>" +
       "</div>" +
-      '<div class="cbg-row">' +
-      '  <label class="cbg-label" for="cbg-opacity-input">Panels</label>' +
-      '  <input type="range" id="cbg-opacity-input" min="20" max="90" step="5" />' +
-      '  <span class="cbg-opacity-value" id="cbg-opacity-value"></span>' +
-      "</div>" +
-      '<div class="cbg-row">' +
-      '  <span class="cbg-label">Tint</span>' +
-      '  <div class="cbg-seg">' +
-      '    <button type="button" id="cbg-tint-light" class="cbg-seg-btn">White</button>' +
-      '    <button type="button" id="cbg-tint-dark" class="cbg-seg-btn">Dark</button>' +
+      '<div class="cbg-group">' +
+      '  <div class="cbg-row">' +
+      '    <span class="cbg-label">Tint</span>' +
+      '    <div class="cbg-seg">' +
+      '      <button type="button" id="cbg-tint-light" class="cbg-seg-btn">White</button>' +
+      '      <button type="button" id="cbg-tint-dark" class="cbg-seg-btn">Dark</button>' +
+      "    </div>" +
       "  </div>" +
       "</div>" +
       '<div class="cbg-row cbg-hint">Panels turn glassy/see-through once a background is set, so it shows everywhere — including the sidebar.</div>' +
@@ -139,6 +168,8 @@
     var colorInput = panel.querySelector("#cbg-color-input");
     var defaultBtn = panel.querySelector("#cbg-default-btn");
     var imageInput = panel.querySelector("#cbg-image-input");
+    var imageTriggerBtn = panel.querySelector("#cbg-image-trigger");
+    var fileNameEl = panel.querySelector("#cbg-file-name");
     var imagePreviewRow = panel.querySelector("#cbg-image-preview-row");
     var imagePreview = panel.querySelector("#cbg-image-preview");
     var removeImageBtn = panel.querySelector("#cbg-remove-image-btn");
@@ -171,8 +202,10 @@
       if (settings.mode === "image" && settings.image) {
         imagePreview.src = settings.image;
         imagePreviewRow.style.display = "flex";
+        fileNameEl.textContent = "Custom image applied";
       } else {
         imagePreviewRow.style.display = "none";
+        fileNameEl.textContent = "No file chosen";
       }
       var op = clampOpacity(settings.opacity);
       opacityInput.value = op;
@@ -184,6 +217,10 @@
 
     toggleBtn.addEventListener("click", function () {
       panel.style.display = panel.style.display === "none" ? "flex" : "none";
+    });
+
+    imageTriggerBtn.addEventListener("click", function () {
+      imageInput.click();
     });
 
     document.addEventListener("click", function (e) {
@@ -209,7 +246,10 @@
       applySettings(current);
       saveSettings(current);
       imagePreviewRow.style.display = "none";
-      setStatus("Reset to default background.");
+      fileNameEl.textContent = "No file chosen";
+      imageInput.value = "";
+      forceDarkTheme();
+      setStatus("Reset to default background and dark mode.");
     });
 
     imageInput.addEventListener("change", function () {
@@ -227,13 +267,17 @@
       if (okTypes.indexOf(file.type) === -1) {
         setStatus("Unsupported file type. Use JPG, PNG, WEBP, GIF, BMP or SVG.", true);
         imageInput.value = "";
+        fileNameEl.textContent = "No file chosen";
         return;
       }
       if (file.size > MAX_IMAGE_BYTES) {
         setStatus("Image is too large (max 4MB). Please choose a smaller file.", true);
         imageInput.value = "";
+        fileNameEl.textContent = "No file chosen";
         return;
       }
+
+      fileNameEl.textContent = file.name;
 
       var reader = new FileReader();
       reader.onload = function () {
@@ -267,6 +311,7 @@
       saveSettings(current);
       imagePreviewRow.style.display = "none";
       imageInput.value = "";
+      fileNameEl.textContent = "No file chosen";
       setStatus("Background image removed.");
     });
 
