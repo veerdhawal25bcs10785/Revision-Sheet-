@@ -112,6 +112,30 @@
   flex-shrink: 0;
 }
 
+.cbg-seg {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.cbg-seg-btn {
+  flex: 1;
+  background: rgba(150, 164, 190, 0.12);
+  color: #f4f7fb;
+  border: 1px solid rgba(150, 164, 190, 0.25);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cbg-seg-btn.active {
+  background: #6ee7b7;
+  color: #0a0d12;
+  border-color: #6ee7b7;
+  font-weight: 600;
+}
+
 .cbg-hint {
   font-size: 11px;
   min-height: 14px;
@@ -124,11 +148,28 @@
 /* the sidebar and every card/panel become translucent + blurred so   */
 /* the background shows through the ENTIRE page, not just the gaps    */
 /* around content — similar to how Gmail shows a theme image behind   */
-/* its translucent sidebar and inbox rows.                            */
+/* its translucent panels.                                            */
+/*                                                                     */
+/* Two tints are supported via [data-cbg-tint]:                       */
+/*  - "light" (default): white frosted glass, like Gmail — panel text */
+/*    is switched to dark for readability regardless of app theme.    */
+/*  - "dark": glass tinted with the app's own dark panel colors.      */
 /* ------------------------------------------------------------------ */
 
+html.cbg-active[data-cbg-tint="light"] {
+  --cbg-tint-sidebar: #ffffff;
+  --cbg-tint-panel: #ffffff;
+  --cbg-tint-panel2: #ffffff;
+}
+
+html.cbg-active[data-cbg-tint="dark"] {
+  --cbg-tint-sidebar: var(--bg-soft);
+  --cbg-tint-panel: var(--panel);
+  --cbg-tint-panel2: var(--panel-2);
+}
+
 html.cbg-active .sidebar {
-  background: color-mix(in srgb, var(--bg-soft) var(--cbg-alpha, 60%), transparent) !important;
+  background: color-mix(in srgb, var(--cbg-tint-sidebar, var(--bg-soft)) var(--cbg-alpha, 60%), transparent) !important;
   -webkit-backdrop-filter: blur(20px) !important;
   backdrop-filter: blur(20px) !important;
 }
@@ -136,7 +177,7 @@ html.cbg-active .sidebar {
 html.cbg-active .status-dot,
 html.cbg-active .status-label,
 html.cbg-active .timeline-step {
-  background: color-mix(in srgb, var(--bg-soft) var(--cbg-alpha, 60%), transparent) !important;
+  background: color-mix(in srgb, var(--cbg-tint-sidebar, var(--bg-soft)) var(--cbg-alpha, 60%), transparent) !important;
 }
 
 html.cbg-active .hero-panel,
@@ -147,7 +188,7 @@ html.cbg-active .modal,
 html.cbg-active .toast,
 html.cbg-active thead th,
 html.cbg-active .timeline-step > span {
-  background: color-mix(in srgb, var(--panel) var(--cbg-alpha, 60%), transparent) !important;
+  background: color-mix(in srgb, var(--cbg-tint-panel, var(--panel)) var(--cbg-alpha, 60%), transparent) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   backdrop-filter: blur(16px) !important;
 }
@@ -156,7 +197,7 @@ html.cbg-active .timeline-step > span {
 html.cbg-active .hero-panel {
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--accent) 13%, transparent), transparent 45%),
-    color-mix(in srgb, var(--panel) var(--cbg-alpha, 60%), transparent) !important;
+    color-mix(in srgb, var(--cbg-tint-panel, var(--panel)) var(--cbg-alpha, 60%), transparent) !important;
 }
 
 html.cbg-active .secondary,
@@ -177,7 +218,7 @@ html.cbg-active select,
 html.cbg-active textarea,
 html.cbg-active nav button:hover,
 html.cbg-active .collapse-btn:hover {
-  background: color-mix(in srgb, var(--panel-2) var(--cbg-alpha, 60%), transparent) !important;
+  background: color-mix(in srgb, var(--cbg-tint-panel2, var(--panel-2)) var(--cbg-alpha, 60%), transparent) !important;
 }
 
 html.cbg-active .task-card,
@@ -195,4 +236,30 @@ html.cbg-active textarea {
 
 html.cbg-active .auth-screen {
   background: transparent !important;
+}
+
+/* White tint: re-point the app's own text-color variables inside every  */
+/* glass surface so labels/values stay readable on a light background,  */
+/* even if the app itself is in dark mode.                              */
+html.cbg-active[data-cbg-tint="light"] .sidebar,
+html.cbg-active[data-cbg-tint="light"] .hero-panel,
+html.cbg-active[data-cbg-tint="light"] .panel,
+html.cbg-active[data-cbg-tint="light"] .stat,
+html.cbg-active[data-cbg-tint="light"] .auth-card,
+html.cbg-active[data-cbg-tint="light"] .modal,
+html.cbg-active[data-cbg-tint="light"] .toast,
+html.cbg-active[data-cbg-tint="light"] .task-card,
+html.cbg-active[data-cbg-tint="light"] .topic-card,
+html.cbg-active[data-cbg-tint="light"] .revision-row,
+html.cbg-active[data-cbg-tint="light"] .segmented,
+html.cbg-active[data-cbg-tint="light"] .insight {
+  --text: #16202f;
+  --muted: #4b5768;
+  --border: rgba(20, 30, 45, 0.14);
+}
+
+html.cbg-active[data-cbg-tint="light"] input,
+html.cbg-active[data-cbg-tint="light"] select,
+html.cbg-active[data-cbg-tint="light"] textarea {
+  color: #16202f !important;
 }

@@ -5,13 +5,14 @@
   var MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB safety cap for localStorage
   var STYLE_TAG_ID = "custom-bg-style";
   var DEFAULT_OPACITY = 60; // % opacity for panels/sidebar when a custom bg is active
+  var DEFAULT_TINT = "light"; // "light" = white glass (Gmail-style), "dark" = tinted with app's own dark colors
 
   function loadSettings() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : { mode: "default", opacity: DEFAULT_OPACITY };
+      return raw ? JSON.parse(raw) : { mode: "default" };
     } catch (e) {
-      return { mode: "default", opacity: DEFAULT_OPACITY };
+      return { mode: "default" };
     }
   }
 
@@ -39,6 +40,10 @@
     return Math.max(20, Math.min(90, v));
   }
 
+  function normalizeTint(v) {
+    return v === "dark" ? "dark" : DEFAULT_TINT;
+  }
+
   function applySettings(settings) {
     var tag = getStyleTag();
     var root = document.documentElement;
@@ -47,6 +52,7 @@
       tag.textContent = "";
       root.classList.remove("cbg-active");
       root.style.removeProperty("--cbg-alpha");
+      root.removeAttribute("data-cbg-tint");
       return;
     }
 
@@ -56,6 +62,7 @@
     var opacityPct = clampOpacity(settings.opacity) + "%";
     root.style.setProperty("--cbg-alpha", opacityPct);
     root.classList.add("cbg-active");
+    root.setAttribute("data-cbg-tint", normalizeTint(settings.tint));
 
     if (settings.mode === "color" && settings.color) {
       tag.textContent =
@@ -74,6 +81,7 @@
     tag.textContent = "";
     root.classList.remove("cbg-active");
     root.style.removeProperty("--cbg-alpha");
+    root.removeAttribute("data-cbg-tint");
   }
 
   // Apply immediately on script load (before UI is built) to avoid any flash.
@@ -114,6 +122,13 @@
       '  <input type="range" id="cbg-opacity-input" min="20" max="90" step="5" />' +
       '  <span class="cbg-opacity-value" id="cbg-opacity-value"></span>' +
       "</div>" +
+      '<div class="cbg-row">' +
+      '  <span class="cbg-label">Tint</span>' +
+      '  <div class="cbg-seg">' +
+      '    <button type="button" id="cbg-tint-light" class="cbg-seg-btn">White</button>' +
+      '    <button type="button" id="cbg-tint-dark" class="cbg-seg-btn">Dark</button>' +
+      "  </div>" +
+      "</div>" +
       '<div class="cbg-row cbg-hint">Panels turn glassy/see-through once a background is set, so it shows everywhere — including the sidebar.</div>' +
       '<div class="cbg-row cbg-hint" id="cbg-status"></div>';
 
@@ -129,6 +144,8 @@
     var removeImageBtn = panel.querySelector("#cbg-remove-image-btn");
     var opacityInput = panel.querySelector("#cbg-opacity-input");
     var opacityValue = panel.querySelector("#cbg-opacity-value");
+    var tintLightBtn = panel.querySelector("#cbg-tint-light");
+    var tintDarkBtn = panel.querySelector("#cbg-tint-dark");
     var status = panel.querySelector("#cbg-status");
 
     function setStatus(msg, isError) {
@@ -139,6 +156,12 @@
           if (status.textContent === msg) status.textContent = "";
         }, 3000);
       }
+    }
+
+    function refreshTintButtons(tint) {
+      var t = normalizeTint(tint);
+      tintLightBtn.classList.toggle("active", t === "light");
+      tintDarkBtn.classList.toggle("active", t === "dark");
     }
 
     function refreshFromSettings(settings) {
@@ -154,6 +177,7 @@
       var op = clampOpacity(settings.opacity);
       opacityInput.value = op;
       opacityValue.textContent = op + "%";
+      refreshTintButtons(settings.tint);
     }
 
     refreshFromSettings(current);
@@ -169,14 +193,19 @@
     });
 
     colorInput.addEventListener("input", function () {
-      current = { mode: "color", color: colorInput.value, opacity: clampOpacity(current.opacity) };
+      current = {
+        mode: "color",
+        color: colorInput.value,
+        opacity: clampOpacity(current.opacity),
+        tint: normalizeTint(current.tint),
+      };
       applySettings(current);
       saveSettings(current);
       imagePreviewRow.style.display = "none";
     });
 
     defaultBtn.addEventListener("click", function () {
-      current = { mode: "default", opacity: clampOpacity(current.opacity) };
+      current = { mode: "default", opacity: clampOpacity(current.opacity), tint: normalizeTint(current.tint) };
       applySettings(current);
       saveSettings(current);
       imagePreviewRow.style.display = "none";
@@ -209,7 +238,12 @@
       var reader = new FileReader();
       reader.onload = function () {
         var dataUrl = reader.result;
-        var settings = { mode: "image", image: dataUrl, opacity: clampOpacity(current.opacity) };
+        var settings = {
+          mode: "image",
+          image: dataUrl,
+          opacity: clampOpacity(current.opacity),
+          tint: normalizeTint(current.tint),
+        };
         var ok = saveSettings(settings);
         if (!ok) {
           setStatus("Could not save image (storage full). Try a smaller image.", true);
@@ -228,7 +262,7 @@
     });
 
     removeImageBtn.addEventListener("click", function () {
-      current = { mode: "default", opacity: clampOpacity(current.opacity) };
+      current = { mode: "default", opacity: clampOpacity(current.opacity), tint: normalizeTint(current.tint) };
       applySettings(current);
       saveSettings(current);
       imagePreviewRow.style.display = "none";
@@ -240,6 +274,20 @@
       var op = clampOpacity(parseInt(opacityInput.value, 10));
       current.opacity = op;
       opacityValue.textContent = op + "%";
+      applySettings(current);
+      saveSettings(current);
+    });
+
+    tintLightBtn.addEventListener("click", function () {
+      current.tint = "light";
+      refreshTintButtons("light");
+      applySettings(current);
+      saveSettings(current);
+    });
+
+    tintDarkBtn.addEventListener("click", function () {
+      current.tint = "dark";
+      refreshTintButtons("dark");
       applySettings(current);
       saveSettings(current);
     });
