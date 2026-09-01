@@ -263,3 +263,57 @@ html.cbg-active[data-cbg-tint="light"] select,
 html.cbg-active[data-cbg-tint="light"] textarea {
   color: #16202f !important;
 }
+
+/* ------------------------------------------------------------------ */
+/* Depth: flat translucent cards are hard to tell apart from each     */
+/* other and from the background. Add soft elevation shadows, a       */
+/* crisper border, and a subtle top glass highlight so each panel     */
+/* visibly sits "above" the wallpaper instead of blending into it.    */
+/* ------------------------------------------------------------------ */
+
+html.cbg-active[data-cbg-tint="light"] {
+  --cbg-elevation: 0 14px 34px rgba(15, 23, 42, 0.16), 0 3px 10px rgba(15, 23, 42, 0.08);
+  --cbg-hairline: rgba(15, 23, 42, 0.16);
+  --cbg-glow: rgba(255, 255, 255, 0.65);
+}
+
+html.cbg-active[data-cbg-tint="dark"] {
+  --cbg-elevation: 0 16px 38px rgba(0, 0, 0, 0.4), 0 3px 10px rgba(0, 0, 0, 0.28);
+  --cbg-hairline: rgba(150, 164, 190, 0.28);
+  --cbg-glow: rgba(255, 255, 255, 0.06);
+}
+
+html.cbg-active .hero-panel,
+html.cbg-active .panel,
+html.cbg-active .stat,
+html.cbg-active .auth-card,
+html.cbg-active .modal,
+html.cbg-active .toast,
+html.cbg-active .task-card,
+html.cbg-active .topic-card,
+html.cbg-active .revision-row,
+html.cbg-active .insight {
+  border-color: var(--cbg-hairline) !important;
+  box-shadow: var(--cbg-elevation), inset 0 1px 0 var(--cbg-glow) !important;
+}
+
+html.cbg-active .sidebar {
+  border-right-color: var(--cbg-hairline) !important;
+  box-shadow: 6px 0 30px rgba(15, 23, 42, 0.1) !important;
+}
+
+html.cbg-active .stat {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+html.cbg-active .stat:hover {
+  transform: translateY(-2px);
+}
+
+/* Slightly firmer separation for smaller chips/badges so they don't */
+/* wash out against the frosted cards behind them.                   */
+html.cbg-active .status-label,
+html.cbg-active .pill,
+html.cbg-active .schedule-preview span {
+  border-color: var(--cbg-hairline) !important;
+}

@@ -4,7 +4,7 @@
   var STORAGE_KEY = "revision-tracker-bg-settings";
   var MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB safety cap for localStorage
   var STYLE_TAG_ID = "custom-bg-style";
-  var DEFAULT_OPACITY = 60; // % opacity for panels/sidebar when a custom bg is active
+  var DEFAULT_OPACITY = 68; // % opacity for panels/sidebar when a custom bg is active
   var DEFAULT_TINT = "light"; // "light" = white glass (Gmail-style), "dark" = tinted with app's own dark colors
 
   function loadSettings() {
