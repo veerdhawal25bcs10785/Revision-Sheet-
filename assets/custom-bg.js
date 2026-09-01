@@ -4,13 +4,14 @@
   var STORAGE_KEY = "revision-tracker-bg-settings";
   var MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB safety cap for localStorage
   var STYLE_TAG_ID = "custom-bg-style";
+  var DEFAULT_OPACITY = 60; // % opacity for panels/sidebar when a custom bg is active
 
   function loadSettings() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : { mode: "default" };
+      return raw ? JSON.parse(raw) : { mode: "default", opacity: DEFAULT_OPACITY };
     } catch (e) {
-      return { mode: "default" };
+      return { mode: "default", opacity: DEFAULT_OPACITY };
     }
   }
 
@@ -33,12 +34,29 @@
     return tag;
   }
 
+  function clampOpacity(v) {
+    v = typeof v === "number" && !isNaN(v) ? v : DEFAULT_OPACITY;
+    return Math.max(20, Math.min(90, v));
+  }
+
   function applySettings(settings) {
     var tag = getStyleTag();
+    var root = document.documentElement;
+
     if (!settings || settings.mode === "default") {
       tag.textContent = "";
+      root.classList.remove("cbg-active");
+      root.style.removeProperty("--cbg-alpha");
       return;
     }
+
+    // Make the sidebar + all cards/panels translucent so the custom
+    // background shows through everywhere (Gmail-style glass look),
+    // instead of only showing in the small gaps around content.
+    var opacityPct = clampOpacity(settings.opacity) + "%";
+    root.style.setProperty("--cbg-alpha", opacityPct);
+    root.classList.add("cbg-active");
+
     if (settings.mode === "color" && settings.color) {
       tag.textContent =
         "html, body { background-image: none !important; " +
@@ -52,7 +70,10 @@
         "background-repeat: no-repeat !important; background-attachment: fixed !important; }";
       return;
     }
+
     tag.textContent = "";
+    root.classList.remove("cbg-active");
+    root.style.removeProperty("--cbg-alpha");
   }
 
   // Apply immediately on script load (before UI is built) to avoid any flash.
@@ -88,6 +109,12 @@
       '  <img id="cbg-image-preview" alt="Background preview" />' +
       '  <button type="button" id="cbg-remove-image-btn" class="cbg-btn">Remove image</button>' +
       "</div>" +
+      '<div class="cbg-row">' +
+      '  <label class="cbg-label" for="cbg-opacity-input">Panels</label>' +
+      '  <input type="range" id="cbg-opacity-input" min="20" max="90" step="5" />' +
+      '  <span class="cbg-opacity-value" id="cbg-opacity-value"></span>' +
+      "</div>" +
+      '<div class="cbg-row cbg-hint">Panels turn glassy/see-through once a background is set, so it shows everywhere — including the sidebar.</div>' +
       '<div class="cbg-row cbg-hint" id="cbg-status"></div>';
 
     wrap.appendChild(toggleBtn);
@@ -100,6 +127,8 @@
     var imagePreviewRow = panel.querySelector("#cbg-image-preview-row");
     var imagePreview = panel.querySelector("#cbg-image-preview");
     var removeImageBtn = panel.querySelector("#cbg-remove-image-btn");
+    var opacityInput = panel.querySelector("#cbg-opacity-input");
+    var opacityValue = panel.querySelector("#cbg-opacity-value");
     var status = panel.querySelector("#cbg-status");
 
     function setStatus(msg, isError) {
@@ -122,6 +151,9 @@
       } else {
         imagePreviewRow.style.display = "none";
       }
+      var op = clampOpacity(settings.opacity);
+      opacityInput.value = op;
+      opacityValue.textContent = op + "%";
     }
 
     refreshFromSettings(current);
@@ -137,18 +169,16 @@
     });
 
     colorInput.addEventListener("input", function () {
-      var settings = { mode: "color", color: colorInput.value };
-      applySettings(settings);
-      saveSettings(settings);
-      current = settings;
+      current = { mode: "color", color: colorInput.value, opacity: clampOpacity(current.opacity) };
+      applySettings(current);
+      saveSettings(current);
       imagePreviewRow.style.display = "none";
     });
 
     defaultBtn.addEventListener("click", function () {
-      var settings = { mode: "default" };
-      applySettings(settings);
-      saveSettings(settings);
-      current = settings;
+      current = { mode: "default", opacity: clampOpacity(current.opacity) };
+      applySettings(current);
+      saveSettings(current);
       imagePreviewRow.style.display = "none";
       setStatus("Reset to default background.");
     });
@@ -179,7 +209,7 @@
       var reader = new FileReader();
       reader.onload = function () {
         var dataUrl = reader.result;
-        var settings = { mode: "image", image: dataUrl };
+        var settings = { mode: "image", image: dataUrl, opacity: clampOpacity(current.opacity) };
         var ok = saveSettings(settings);
         if (!ok) {
           setStatus("Could not save image (storage full). Try a smaller image.", true);
@@ -198,13 +228,20 @@
     });
 
     removeImageBtn.addEventListener("click", function () {
-      var settings = { mode: "default" };
-      applySettings(settings);
-      saveSettings(settings);
-      current = settings;
+      current = { mode: "default", opacity: clampOpacity(current.opacity) };
+      applySettings(current);
+      saveSettings(current);
       imagePreviewRow.style.display = "none";
       imageInput.value = "";
       setStatus("Background image removed.");
+    });
+
+    opacityInput.addEventListener("input", function () {
+      var op = clampOpacity(parseInt(opacityInput.value, 10));
+      current.opacity = op;
+      opacityValue.textContent = op + "%";
+      applySettings(current);
+      saveSettings(current);
     });
   }
 

@@ -99,8 +99,100 @@
   border: 1px solid rgba(150, 164, 190, 0.25);
 }
 
+#cbg-opacity-input {
+  flex: 1;
+  accent-color: #6ee7b7;
+}
+
+.cbg-opacity-value {
+  font-size: 12px;
+  width: 34px;
+  text-align: right;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
 .cbg-hint {
   font-size: 11px;
   min-height: 14px;
   opacity: 0.85;
+  line-height: 1.35;
+}
+
+/* ------------------------------------------------------------------ */
+/* Glass mode: once a custom background (color or image) is active,   */
+/* the sidebar and every card/panel become translucent + blurred so   */
+/* the background shows through the ENTIRE page, not just the gaps    */
+/* around content — similar to how Gmail shows a theme image behind   */
+/* its translucent sidebar and inbox rows.                            */
+/* ------------------------------------------------------------------ */
+
+html.cbg-active .sidebar {
+  background: color-mix(in srgb, var(--bg-soft) var(--cbg-alpha, 60%), transparent) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+html.cbg-active .status-dot,
+html.cbg-active .status-label,
+html.cbg-active .timeline-step {
+  background: color-mix(in srgb, var(--bg-soft) var(--cbg-alpha, 60%), transparent) !important;
+}
+
+html.cbg-active .hero-panel,
+html.cbg-active .panel,
+html.cbg-active .stat,
+html.cbg-active .auth-card,
+html.cbg-active .modal,
+html.cbg-active .toast,
+html.cbg-active thead th,
+html.cbg-active .timeline-step > span {
+  background: color-mix(in srgb, var(--panel) var(--cbg-alpha, 60%), transparent) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+/* hero-panel keeps its subtle accent gradient, just with a translucent base */
+html.cbg-active .hero-panel {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 13%, transparent), transparent 45%),
+    color-mix(in srgb, var(--panel) var(--cbg-alpha, 60%), transparent) !important;
+}
+
+html.cbg-active .secondary,
+html.cbg-active .icon-btn,
+html.cbg-active .pill,
+html.cbg-active .segmented,
+html.cbg-active .segmented button,
+html.cbg-active .task-card,
+html.cbg-active .topic-card,
+html.cbg-active .revision-row,
+html.cbg-active .schedule-preview span,
+html.cbg-active .file-action,
+html.cbg-active .day,
+html.cbg-active .heat,
+html.cbg-active .insight,
+html.cbg-active input,
+html.cbg-active select,
+html.cbg-active textarea,
+html.cbg-active nav button:hover,
+html.cbg-active .collapse-btn:hover {
+  background: color-mix(in srgb, var(--panel-2) var(--cbg-alpha, 60%), transparent) !important;
+}
+
+html.cbg-active .task-card,
+html.cbg-active .topic-card,
+html.cbg-active .revision-row,
+html.cbg-active .modal,
+html.cbg-active .auth-card,
+html.cbg-active .segmented,
+html.cbg-active input,
+html.cbg-active select,
+html.cbg-active textarea {
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+html.cbg-active .auth-screen {
+  background: transparent !important;
 }
